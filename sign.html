@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Подписать Escrow</title>
+  <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+    button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
+    .info { background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>🔐 Подтвердите создание Escrow</h2>
+
+  <div class="info">
+    <p><strong>Сумма:</strong> <span id="amount">...</span> ETH</p>
+    <p><strong>Исполнитель:</strong> <span id="worker">...</span></p>
+    <p><strong>Срок:</strong> <span id="deadline">...</span> часов</p>
+  </div>
+
+  <button onclick="connectMetaMask()" id="connectBtn">Подключить MetaMask</button>
+  <button onclick="deployContract()" id="deployBtn" disabled>Подписать деплой</button>
+
+  <script>
+    let provider, signer;
+
+    // Получаем параметры из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const amount = urlParams.get("amount") || "0.01";
+    const worker = urlParams.get("worker") || "0x...";
+    const deadlineHours = parseInt(urlParams.get("deadline") || "72");
+
+    // Заполняем интерфейс
+    document.getElementById("amount").textContent = amount;
+    document.getElementById("worker").textContent = worker;
+    document.getElementById("deadline").textContent = deadlineHours;
+
+    // Подключение MetaMask
+    async function connectMetaMask() {
+      if (typeof window.ethereum !== "undefined") {
+        try {
+          await ethereum.request({ method: "eth_requestAccounts" });
+          provider = new ethers.BrowserProvider(window.ethereum);
+          signer = await provider.getSigner();
+          document.getElementById("connectBtn").disabled = true;
+          document.getElementById("deployBtn").disabled = false;
+          alert("MetaMask подключён!");
+        } catch (error) {
+          console.error("Ошибка подключения:", error);
+          alert("Не удалось подключиться к MetaMask");
+        }
+      } else {
+        alert("Установите MetaMask!");
+      }
+    }
+
+    // Деплой контракта
+    async function deployContract() {
+      const deadline = Math.floor(Date.now() / 1000) + deadlineHours * 3600;
+
+      // Байт-код контракта (упрощённый шаблон)
+      const bytecode = "0x608060405234801561001057600080fd5b5060df8061001f6000396000f3fe6080604052600436106049576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680638da5cb5b1460
