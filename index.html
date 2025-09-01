@@ -9,6 +9,7 @@
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
     button { padding: 10px 20px; font-size: 16px; margin: 10px 0; }
     .info { background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 10px 0; }
+    .error { color: red; }
   </style>
 </head>
 <body>
@@ -22,15 +23,17 @@
 
   <button onclick="connectMetaMask()" id="connectBtn">Подключить MetaMask</button>
   <button onclick="deployContract()" id="deployBtn" disabled>Подписать деплой</button>
+  <p id="status" class="error"></p>
 
   <script>
     let provider, signer;
 
     // Получаем параметры из URL
     const urlParams = new URLSearchParams(window.location.search);
-    const amount = urlParams.get("amount") || "0.01";
-    const worker = urlParams.get("worker") || "0x...";
+    const amount = parseFloat(urlParams.get("amount") || "0.01");
+    const worker = urlParams.get("worker") || "0x0000000000000000000000000000000000000000";
     const deadlineHours = parseInt(urlParams.get("deadline") || "72");
+    const deadline = Math.floor(Date.now() / 1000) + deadlineHours * 3600;
 
     // Заполняем интерфейс
     document.getElementById("amount").textContent = amount;
@@ -46,19 +49,22 @@
           signer = await provider.getSigner();
           document.getElementById("connectBtn").disabled = true;
           document.getElementById("deployBtn").disabled = false;
-          alert("MetaMask подключён!");
+          document.getElementById("status").textContent = "MetaMask подключён!";
         } catch (error) {
           console.error("Ошибка подключения:", error);
-          alert("Не удалось подключиться к MetaMask");
+          document.getElementById("status").textContent = "Не удалось подключиться к MetaMask";
         }
       } else {
-        alert("Установите MetaMask!");
+        document.getElementById("status").textContent = "Установите MetaMask!";
       }
     }
 
-    // Деплой контракта
-    async function deployContract() {
-      const deadline = Math.floor(Date.now() / 1000) + deadlineHours * 3600;
+    // Байт-код контракта (из Escrow.json)
+    const bytecode = "0x608060405234801561001057600080fd5b50600436106100415760003560e01c80638da5cb5b14610046578063f3fef3a31461006e575b600080fd5b61004e610096565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6100946004803603602081101561009a57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506100a0565b005b60005481565b806000819055505056fea2646970667358221220...";
 
-      // Байт-код контракта (упрощённый шаблон)
-      const bytecode = "0x608060405234801561001057600080fd5b50600436106100415760003560e01c80638da5cb5b14610046578063f3fef3a31461006e575b600080fd5b61004e610096565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b6100946004803603602081101561009a57600080fd5b81019080803573ffffffffffffffffffffffffffffffffffffffff1690602001909291905050506100a0565b005b60005481565b806000819055505056fea2646970667358221220..."
+    // ABI контракта (из Escrow.json)
+    const abi = [
+      {
+        "inputs": [
+          { "name": "_worker", "type": "address" },
+          { "name": "_amount", "type": "
